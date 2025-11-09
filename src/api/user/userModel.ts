@@ -3,47 +3,62 @@ import { z } from "zod";
 
 extendZodWithOpenApi(z);
 
+export const UserRole = ["ADMIN", "MANAGER", "TEAM MEMBER"] as const;
 export type User = z.infer<typeof UserSchema>;
 export const UserSchema = z.object({
-  _id: z.uuid(),
-  name: z.string(),
-  email: z.email(),
-  password: z.string(),
-  createdAt: z.date(),
-  updatedAt: z.date(),
+	_id: z.uuid(),
+	name: z.string(),
+	email: z.email(),
+	password: z.string(),
+	location: z.string(),
+	role: z.enum(UserRole),
+	createdAt: z.date(),
+	updatedAt: z.date(),
+	lastLogin: z.date(),
 });
 
 // Input Validation for 'GET users/:id' endpoint
 export const GetUserSchema = z.object({
-  params: z.object({ id: z.uuid() }),
+	params: z.object({ id: z.uuid() }),
 });
 
 // Input Validation for 'CREATE /users' endpoint
 export const CreateUserSchema = z.object({
-  body: z.object({
-    name: z.string().min(1, "Name is required"),
-    email: z.email("Invalid email address"),
-    password: z.string().min(6, "password is too short"),
-  }),
+	body: z.object({
+		name: z.string().min(1, "Name is required"),
+		email: z.email("Invalid email address"),
+		password: z.string().min(6, "password is too short"),
+		location: z.string().min(4, "Location is too short"),
+	}),
 });
 
 //Input Validation for 'LOGIN /users/login' endpoint
 export const LoginUserSchema = z.object({
-  body: z.object({
-    email: z.email("Invalid email address"),
-    password: z.string().min(6, "password is too short"),
-  }),
-  response: z.object({
-    token: z.string(),
-    ...UserSchema.pick({ _id: true, email: true, name: true }).shape,
-  }),
+	body: z.object({
+		email: z.email("Invalid email address"),
+		password: z.string().min(6, "password is too short"),
+	}),
+});
+
+export const LoginUserResponseSchema = z.object({
+	token: z.string(),
+	...UserSchema.pick({ _id: true, email: true, name: true }).shape,
 });
 
 // Input Validation for 'UPDATE /users/:id' endpoint
 export const UpdateUserSchema = z.object({
-  params: z.object({ id: z.uuid() }),
-  body: z.object({
-    name: z.string().min(1, "Name is required").optional(),
-    email: z.email("Invalid email address").optional(),
-  }),
+	params: z.object({ id: z.uuid() }),
+	body: z.object({
+		name: z.string().min(1, "Name is required").optional(),
+		email: z.email("Invalid email address").optional(),
+	}),
+});
+
+//Add team member
+// Input Validation for 'CREATE /users/team' endpoint
+export const AddTeamSchema = z.object({
+	body: z.object({
+		...CreateUserSchema.shape,
+		role: z.enum(UserRole),
+	}),
 });

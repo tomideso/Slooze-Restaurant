@@ -4,15 +4,15 @@ import type { MenuItem } from "@/api/menuItem/menuItemModel";
 const Schema = mongoose.Schema;
 
 const MenuItemSchema = new Schema(
-  {
-    name: { type: String, required: true },
-    description: String,
-    price: { type: Number, min: 0, required: true },
-    restaurant: { type: Schema.Types.ObjectId, ref: "Restaurant", required: true },
-  },
-  {
-    timestamps: true,
-  }
+	{
+		name: { type: String, required: true },
+		description: String,
+		price: { type: Number, min: 0, required: true },
+		restaurant: { type: Schema.Types.ObjectId, ref: "Restaurant", required: true },
+	},
+	{
+		timestamps: true,
+	},
 );
 
 export const MenuItemRepository = mongoose.model<Document & MenuItem>("MenuItem", MenuItemSchema);

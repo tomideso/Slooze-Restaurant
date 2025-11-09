@@ -1,4 +1,4 @@
-import type { Request, RequestHandler, Response } from "express";
+import type { Request, Response } from "express";
 
 import { userService } from "@/api/user/userService";
 
@@ -10,6 +10,11 @@ class UserController {
 
   public async loginUser(req: Request, res: Response) {
     const serviceResponse = await userService.login(req.body.email, req.body.password);
+    res.status(serviceResponse.statusCode).send(serviceResponse);
+  }
+
+  public async addTeam(req: Request, res: Response) {
+    const serviceResponse = await userService.addTeam(req.body);
     res.status(serviceResponse.statusCode).send(serviceResponse);
   }
 }

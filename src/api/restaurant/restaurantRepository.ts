@@ -21,18 +21,15 @@ import type { Restaurant } from "@/api/restaurant/restaurantModel";
 const Schema = mongoose.Schema;
 
 const RestaurantSchema = new Schema(
-  {
-    name: { type: String, required: true },
-    email: String,
-  },
-  {
-    timestamps: true,
-  }
+	{
+		name: { type: String, required: true },
+		email: String,
+	},
+	{
+		timestamps: true,
+	},
 );
 
-export const RestaurantRepository = mongoose.model<Document & Restaurant>(
-  "Restaurant",
-  RestaurantSchema
-);
+export const RestaurantRepository = mongoose.model<Document & Restaurant>("Restaurant", RestaurantSchema);
 
 // Note: The above code defines a Mongoose model for the Restaurant entity, which includes fields for name and email, along with automatic timestamping for creation and updates.

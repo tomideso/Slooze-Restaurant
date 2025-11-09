@@ -1,9 +1,12 @@
 import type { Request, RequestHandler, Response } from "express";
 
 import { restaurantService } from "@/api/restaurant/restaurantService";
+import { logger } from "@/server";
 
 class RestaurantController {
   public getRestaurants: RequestHandler = async (_req: Request, res: Response) => {
+    logger.info("headers");
+    logger.info(_req.headers["authorization"]);
     const serviceResponse = await restaurantService.findAll();
     res.status(serviceResponse.statusCode).send(serviceResponse);
   };

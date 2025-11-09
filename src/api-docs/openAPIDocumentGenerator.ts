@@ -1,5 +1,5 @@
 import { OpenAPIRegistry, OpenApiGeneratorV3 } from "@asteasolutions/zod-to-openapi";
-
+import { cartRegistry } from "@/api/cart/cartRouter";
 import { healthCheckRegistry } from "@/api/healthCheck/healthCheckRouter";
 import { menuItemRegistry } from "@/api/menuItem/menuItemRouter";
 import { restaurantRegistry } from "@/api/restaurant/restaurantRouter";
@@ -8,7 +8,13 @@ import { userRegistry } from "@/api/user/userRouter";
 export type OpenAPIDocument = ReturnType<OpenApiGeneratorV3["generateDocument"]>;
 
 export function generateOpenAPIDocument(): OpenAPIDocument {
-  const registry = new OpenAPIRegistry([healthCheckRegistry, userRegistry, menuItemRegistry, restaurantRegistry]);
+  const registry = new OpenAPIRegistry([
+    healthCheckRegistry,
+    userRegistry,
+    menuItemRegistry,
+    restaurantRegistry,
+    cartRegistry,
+  ]);
   const generator = new OpenApiGeneratorV3(registry.definitions);
 
   return generator.generateDocument({
@@ -19,7 +25,7 @@ export function generateOpenAPIDocument(): OpenAPIDocument {
     },
     externalDocs: {
       description: "View the raw OpenAPI Specification in JSON format",
-      url: "/swagger.json",
+      url: "/swagger/swagger.json",
     },
   });
 }
