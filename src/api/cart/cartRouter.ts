@@ -2,7 +2,6 @@ import { OpenAPIRegistry } from "@asteasolutions/zod-to-openapi";
 import express, { type Router } from "express";
 import passport from "passport";
 import { z } from "zod";
-
 import { createApiResponse } from "@/api-docs/openAPIResponseBuilders";
 import { commonValidations } from "@/common/utils/commonValidation";
 import { validateRequests } from "@/common/utils/httpHandlers";

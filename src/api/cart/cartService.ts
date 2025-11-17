@@ -15,21 +15,20 @@ export class CartService {
   }
 
   // Retrieves cart for logged in user or by cartId
-  async findCart(userId?: string, cartId?: string): Promise<ServiceResponse<Cart[] | null>> {
+  async findCart(userId?: string, cartId?: string): Promise<ServiceResponse<Cart | null>> {
     try {
-      let cart: Cart[] | null;
+      let cart: Cart | null;
 
-      //   if (cartId) {
-      //     cart = await this.cartRepository.findById(cartId).lean();
-      //   } else {
-      cart = await this.cartRepository.find({ user: userId }).lean();
-      //   }
+      if (cartId) {
+        cart = await this.cartRepository.findById(cartId).lean();
+      } else {
+        cart = await this.cartRepository.findOne({ user: userId }).lean();
+      }
       if (!cart) {
         return ServiceResponse.failure("No Cart found", null, StatusCodes.NOT_FOUND);
       }
 
-      console.log({ cart });
-      return ServiceResponse.success<Cart[]>("Cart found", cart);
+      return ServiceResponse.success<Cart>("Cart found", cart);
     } catch (ex) {
       const errorMessage = `Error cart: $${(ex as Error).message}`;
       logger.error(errorMessage);
@@ -45,6 +44,8 @@ export class CartService {
   async create({ userId, items = [] }: { userId: string; items?: CartItem }): Promise<ServiceResponse<Cart | null>> {
     try {
       const menuItemIds = items.map(({ menuItem }) => new mongo.ObjectId(menuItem as string));
+      const itemsWithQuantity = items.filter(({ quantity }) => quantity > 0);
+
       const cart = await this.cartRepository.findOneAndUpdate(
         { user: userId },
         //update incase items is passed in
@@ -60,7 +61,7 @@ export class CartService {
               },
             },
           },
-          { $set: { items: { $concatArrays: ["$items", items] } } },
+          { $set: { items: { $concatArrays: ["$items", itemsWithQuantity] } } },
         ],
         { new: true }
       );
@@ -87,16 +88,18 @@ export class CartService {
 
   //Updates an cart item
   async update(userId: string, items: CartItem): Promise<ServiceResponse<Cart | null>> {
-    let transformedItems: Record<string, { id: string; quantity: number }> = {};
+    let transformedItems: Record<string, { id: mongo.ObjectId; quantity: number }> = {};
 
     transformedItems = items.reduce((acc, currentValue) => {
       acc[currentValue.menuItem as string] = {
-        id: currentValue.menuItem as string,
-        quantity: currentValue.quantity,
+        id: new mongo.ObjectId(currentValue.menuItem as string),
+        quantity: Math.max(0, currentValue.quantity),
       };
 
       return acc;
     }, transformedItems);
+
+    //account for zero quantity
 
     try {
       const updatedCart = await this.cartRepository.findOneAndUpdate(
@@ -117,7 +120,7 @@ export class CartService {
                     $cond: [
                       {
                         $eq: [
-                          "$$item.menuItem",
+                          { $toObjectId: "$$item.menuItem" },
                           {
                             $toObjectId: {
                               $getField: {
@@ -134,28 +137,62 @@ export class CartService {
                         ],
                       },
                       {
-                        $mergeObjects: [
-                          "$$item",
+                        $cond: [
                           {
-                            quantity: {
-                              $toInt: {
-                                $getField: {
-                                  field: "quantity",
-                                  input: {
-                                    $getField: {
-                                      input: "$transformedItems",
-                                      field: { $toString: "$$item.menuItem" },
+                            $eq: [
+                              {
+                                $toInt: {
+                                  $getField: {
+                                    field: "quantity",
+                                    input: {
+                                      $getField: {
+                                        input: "$transformedItems",
+                                        field: { $toString: "$$item.menuItem" },
+                                      },
                                     },
                                   },
                                 },
                               },
-                            },
+                              0,
+                            ],
+                          },
+                          null, //remove item if quantity is zero
+                          {
+                            $mergeObjects: [
+                              "$$item",
+                              {
+                                quantity: {
+                                  $toInt: {
+                                    $getField: {
+                                      field: "quantity",
+                                      input: {
+                                        $getField: {
+                                          input: "$transformedItems",
+                                          field: { $toString: "$$item.menuItem" },
+                                        },
+                                      },
+                                    },
+                                  },
+                                },
+                              },
+                            ],
                           },
                         ],
                       },
                       "$$item",
                     ],
                   },
+                },
+              },
+            },
+          },
+          {
+            $set: {
+              items: {
+                $filter: {
+                  input: "$items",
+                  as: "item",
+                  cond: { $ne: ["$$item", null] }, // Filter out null values
                 },
               },
             },

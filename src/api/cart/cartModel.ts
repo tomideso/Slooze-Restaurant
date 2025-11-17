@@ -32,7 +32,7 @@ export const CreateCartSchema = z.object({
       items: z.array(
         z.object({
           menuItem: commonValidations._id.openapi({ description: "menuItem Id" }),
-          quantity: z.number().positive(),
+          quantity: z.number().nonnegative(),
         })
       ),
     })
@@ -46,7 +46,7 @@ export const UpdateCartSchema = z.object({
       .array(
         z.object({
           menuItem: commonValidations._id.openapi({ description: "menuItem Id" }),
-          quantity: z.number().positive(),
+          quantity: z.number().nonnegative(),
         })
       )
       .nonempty(),
